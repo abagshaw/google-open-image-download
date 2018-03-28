@@ -105,11 +105,18 @@ def scale(content, min_dim):
     )
 
 
-def read_image(response, min_dim):
+def read_image(request, min_dim):
     """ Download response in chunks and convert to a scaled Image object """
 
     content = six.BytesIO()
-    shutil.copyfileobj(response.raw, content)
+    
+    media = MediaIoBaseDownload(content, request)
+    done = False
+    while not done:
+      # _ is a placeholder for a progress object that we ignore.
+      # (Our file is small, so we skip reporting progress.)
+      _, done = media.next_chunk()
+    
     content.seek(0)
 
     return scale(content, min_dim)
@@ -122,7 +129,7 @@ def consumer(args, queue):
         time.sleep(0.1)  # give the queue a chance to populate
 
     while not queue.empty():
-        code, url = queue.get(block=True, timeout=None)
+        code = queue.get(block=True, timeout=None)
 
         out_path = make_out_path(code, args.sub_dirs, args.output)
 
@@ -131,8 +138,8 @@ def consumer(args, queue):
             continue
 
         try:
-            response = requests.get(url, stream=True, timeout=args.timeout)
-            image = read_image(response, args.min_dim)
+            request = gcs_service.objects().get_media(bucket='open_images_dataset", object='/train/{}.jpg'.format(code))
+            image = read_image(request, args.min_dim)
             image.save(out_path)
         except Exception:
             log.warning('error {}'.format(traceback.format_exc()))
@@ -144,9 +151,12 @@ def producer(args, queue):
     """ Populate the queue with image_id, url pairs. """
 
     with open(args.input) as f:
+        prev = None
         for row in unicode_dict_reader(f):
-            queue.put([row['ImageID'], row['OriginalURL']], block=True, timeout=None)
-            log.debug('queue_size = {}'.format(queue.qsize()))
+            if row['ImageID'] != prev:
+                queue.put([row['ImageID'], block=True, timeout=None)
+                prev = row['ImageID']
+                log.debug('queue_size = {}'.format(queue.qsize()))
 
     queue.close()
 
