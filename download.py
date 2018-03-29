@@ -26,10 +26,10 @@ from apiclient.http import MediaIoBaseDownload
 
 def config_logger():
     logger = logging.getLogger('download')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.WARNING)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(logging.WARNING)
 
     formatter = logging.Formatter('%(process)d @ %(asctime)s (%(relativeCreated)d) '
                                   '%(name)s - %(levelname)s - %(message)s')
