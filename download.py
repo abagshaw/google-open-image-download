@@ -137,7 +137,7 @@ def consumer(args, queue):
             continue
 
         try:
-            request = gcs_service.objects().get_media(bucket='open_images_dataset', object='{}/{}.jpg'.format(args.download_folder, code))
+            request = gcs_service.objects().get_media(bucket='open-images-dataset', object='{}/{}.jpg'.format(args.download_folder, code))
             image = read_image(request, args.min_dim)
             image.save(out_path)
         except Exception:
