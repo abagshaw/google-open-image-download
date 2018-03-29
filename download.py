@@ -78,7 +78,7 @@ def safe_mkdir(path):
 def make_out_path(code, out_dir):
     safe_mkdir(out_dir)
 
-    return os.path.join(path, code + '.jpg')
+    return os.path.join(out_dir, code + '.jpg')
 
 
 def scale(content, min_dim):
@@ -143,7 +143,7 @@ def consumer(args, queue):
         except Exception:
             log.warning('error {}'.format(traceback.format_exc()))
         else:
-            log.debug('saving {} to {}'.format(url, out_path))
+            log.debug('saving {} to {}'.format(code, out_path))
 
 
 def producer(args, queue):
