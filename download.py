@@ -15,7 +15,7 @@ from PIL import Image
 import six
 
 #Authenticate with GCP and setup service
-import google-cloud-storage
+from google.cloud import storage
 storage_client = storage.Client()
 # Create a bucket object for our bucket
 bucket = storage_client.get_bucket("open-images-dataset")
