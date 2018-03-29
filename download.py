@@ -15,6 +15,14 @@ from PIL import Image
 import requests
 import six
 
+#Authenticate with GCP and setup service
+from google.colab import auth
+auth.authenticate_user()
+from googleapiclient.discovery import build
+gcs_service = build('storage', 'v1')
+
+from apiclient.http import MediaIoBaseDownload
+
 
 def config_logger():
     logger = logging.getLogger('download')
@@ -32,21 +40,20 @@ def config_logger():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Download Google open image dataset.')
+    parser = argparse.ArgumentParser(description='Download Google Open Images dataset from GCP bucket.')
 
     parser.add_argument('--timeout', type=float, default=2.0,
                         help='image download timeout')
     parser.add_argument('--queue-size', type=int, default=1000,
                         help='maximum image url queue size')
-    parser.add_argument('--consumers', type=int, default=5,
+    parser.add_argument('--consumers', type=int, default=32,
                         help='number of download workers')
-    parser.add_argument('--min-dim', type=int, default=256,
+    parser.add_argument('--min-dim', type=int, default=320,
                         help='smallest dimension for the aspect ratio preserving scale'
                              '(-1 for no scale)')
-    parser.add_argument('--sub-dirs', type=int, default=1000,
-                        help='number of directories to split downloads over')
     parser.add_argument('--force', default=False, action='store_true',
                         help='force download and overwrite local files')
+    parser.add_argument('--download-folder', default="/", help='folder in bucket where images are to be found.')
 
     parser.add_argument('input', help='open image input csv')
     parser.add_argument('output', help='save directory')
@@ -68,16 +75,8 @@ def safe_mkdir(path):
             log.exception()
 
 
-def make_out_path(code, sub_dirs, out_dir):
-    # convert hex string identifier to integer
-    int_code = int(code, 16)
-
-    # choose a sub-directory to store image in
-    sub_dir = str(int_code % (sub_dirs - 1))
-
-    # make the sub directory if it does not exist
-    path = os.path.join(out_dir, sub_dir)
-    safe_mkdir(path)
+def make_out_path(code, out_dir):
+    safe_mkdir(out_dir)
 
     return os.path.join(path, code + '.jpg')
 
@@ -131,14 +130,14 @@ def consumer(args, queue):
     while not queue.empty():
         code = queue.get(block=True, timeout=None)
 
-        out_path = make_out_path(code, args.sub_dirs, args.output)
+        out_path = make_out_path(code, args.output)
 
         if not args.force and os.path.exists(out_path):
             log.debug('skipping {}, already exists'.format(out_path))
             continue
 
         try:
-            request = gcs_service.objects().get_media(bucket='open_images_dataset", object='/train/{}.jpg'.format(code))
+            request = gcs_service.objects().get_media(bucket='open_images_dataset", object='{}/{}.jpg'.format(args.download_folder, code))
             image = read_image(request, args.min_dim)
             image.save(out_path)
         except Exception:
@@ -154,7 +153,7 @@ def producer(args, queue):
         prev = None
         for row in unicode_dict_reader(f):
             if row['ImageID'] != prev:
-                queue.put([row['ImageID'], block=True, timeout=None)
+                queue.put(row['ImageID'], block=True, timeout=None)
                 prev = row['ImageID']
                 log.debug('queue_size = {}'.format(queue.qsize()))
 
