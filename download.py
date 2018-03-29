@@ -44,7 +44,7 @@ def parse_args():
 
     parser.add_argument('--timeout', type=float, default=2.0,
                         help='image download timeout')
-    parser.add_argument('--queue-size', type=int, default=1000,
+    parser.add_argument('--queue-size', type=int, default=5000,
                         help='maximum image url queue size')
     parser.add_argument('--consumers', type=int, default=32,
                         help='number of download workers')
