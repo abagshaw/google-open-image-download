@@ -12,17 +12,13 @@ import traceback
 
 from PIL import Image
 
-import requests
 import six
 
 #Authenticate with GCP and setup service
-from google.colab import auth
-auth.authenticate_user()
-from googleapiclient.discovery import build
-gcs_service = build('storage', 'v1')
-
-from apiclient.http import MediaIoBaseDownload
-
+import google-cloud-storage
+storage_client = storage.Client()
+# Create a bucket object for our bucket
+bucket = storage_client.get_bucket("open-images-dataset")
 
 def config_logger():
     logger = logging.getLogger('download')
@@ -104,19 +100,13 @@ def scale(content, min_dim):
     )
 
 
-def read_image(request, min_dim):
+def read_image(path, min_dim):
     """ Download response in chunks and convert to a scaled Image object """
 
-    content = six.BytesIO()
-    
-    media = MediaIoBaseDownload(content, request)
-    done = False
-    while not done:
-      # _ is a placeholder for a progress object that we ignore.
-      # (Our file is small, so we skip reporting progress.)
-      _, done = media.next_chunk()
-    
-    content.seek(0)
+    # Create a blob object from the filepath
+    blob = bucket.blob(path)
+    # Download the file to a destination
+    content = blob.download_as_string()
 
     return scale(content, min_dim)
 
@@ -137,8 +127,7 @@ def consumer(args, queue):
             continue
 
         try:
-            request = gcs_service.objects().get_media(bucket='open-images-dataset', object='{}/{}.jpg'.format(args.download_folder, code))
-            image = read_image(request, args.min_dim)
+            image = read_image("{}/{}.jpg".format(args.download_folder, code), args.min_dim)
             image.save(out_path)
         except Exception:
             log.warning('error {}'.format(traceback.format_exc()))
