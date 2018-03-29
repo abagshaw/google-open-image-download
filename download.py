@@ -10,7 +10,7 @@ import shutil
 import time
 import traceback
 
-from PIL import Image
+import Image
 
 import six
 
