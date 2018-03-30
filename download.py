@@ -18,7 +18,7 @@ import six
 from google.cloud import storage
 storage_client = storage.Client()
 # Create a bucket object for our bucket
-bucket = storage_client.get_bucket("open-images-dataset")
+bucket = storage_client.lookup_bucket("open-images-dataset")
 
 def config_logger():
     logger = logging.getLogger('download')
