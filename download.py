@@ -106,7 +106,8 @@ def read_image(path, min_dim):
     # Create a blob object from the filepath
     blob = bucket.blob(path)
     # Download the file to a destination
-    content = blob.download_as_string().encode()
+    content = six.BytesIO(blob.download_as_string())
+    content.seek(0)
 
     return scale(content, min_dim)
 
