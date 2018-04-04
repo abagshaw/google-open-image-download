@@ -9,12 +9,20 @@ def unicode_dict_reader(f, **kwargs):
         yield {key: value for key, value in six.iteritems(row)}
 
 def writeAnnotations(id, annotations):
-  outFile = open("{}/{}.txt".format(sys.argv[2], id), 'w')
+  outFile = open("{}/{}.txt".format(sys.argv[3], id), 'w')
   outFile.write(annotations)
   outFile.close()
 
+labels = {}
 currentBoxes = None
 prevImage = None
+
+with open(sys.argv[2]) as f:
+  lines = f.read().splitlines()
+  num = 0
+  for line in lines:
+      labels[line] = num
+      num += 1
 
 with open(sys.argv[1]) as f:
     for row in unicode_dict_reader(f):
@@ -23,7 +31,7 @@ with open(sys.argv[1]) as f:
             writeAnnotations(prevImage, currentBoxes)
           prevImage = row['ImageID']
           currentBoxes = ""
-        currentBoxes += "{} {} {} {} {}\n".format(row['LabelName'], row['XMin'], row['YMin'], float(row['XMax']) - float(row['XMin']), float(row['YMax']) - float(row['YMin']))
+        currentBoxes += "{} {} {} {} {}\n".format(labels[row['LabelName']], (float(row['XMin']) + float(row['XMax'])) / 2, (float(row['YMin']) + float(row['YMax'])) / 2, float(row['XMax']) - float(row['XMin']), float(row['YMax']) - float(row['YMin']))
     
     #Catch trailing image
     if prevImage:
