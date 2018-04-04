@@ -33,6 +33,8 @@ with open(sys.argv[1]) as f:
           currentBoxes = ""
         
         if row['LabelName'] in labels:
+          if 'XMin' not in row:
+            print(row)
           currentBoxes += "{} {} {} {} {}\n".format(labels[row['LabelName']], (float(row['XMin']) + float(row['XMax'])) / 2, (float(row['YMin']) + float(row['YMax'])) / 2, float(row['XMax']) - float(row['XMin']), float(row['YMax']) - float(row['YMin']))
     
     #Catch trailing image
