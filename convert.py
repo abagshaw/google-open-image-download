@@ -31,7 +31,9 @@ with open(sys.argv[1]) as f:
             writeAnnotations(prevImage, currentBoxes)
           prevImage = row['ImageID']
           currentBoxes = ""
-        currentBoxes += "{} {} {} {} {}\n".format(labels[row['LabelName']], (float(row['XMin']) + float(row['XMax'])) / 2, (float(row['YMin']) + float(row['YMax'])) / 2, float(row['XMax']) - float(row['XMin']), float(row['YMax']) - float(row['YMin']))
+        
+        if row['LabelName'] in labels:
+          currentBoxes += "{} {} {} {} {}\n".format(labels[row['LabelName']], (float(row['XMin']) + float(row['XMax'])) / 2, (float(row['YMin']) + float(row['YMax'])) / 2, float(row['XMax']) - float(row['XMin']), float(row['YMax']) - float(row['YMin']))
     
     #Catch trailing image
     if prevImage:
